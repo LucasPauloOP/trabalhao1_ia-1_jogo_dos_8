@@ -35,19 +35,19 @@ def imprime_tabuleiro(tab):
   print(tab[1])
   print(tab[2])
 
-def imprime_jogadas(tab):
-  print("\nAs jogadas foram:")
+def imprime_resultado(tab):
+  print('\nAs jogadas foram:')
   pilha = []
   #vai do nó objetivo até o nó raiz
-  while(tab[3][1] != None): 
+  while(tab[3][0] != 0): 
     pilha.append(tab)
-    tab = tab[3][1]
+    tab = tab[3][0]
   pilha.append(tab)
   while(len(pilha)>0):
     temp = pilha.pop()
     imprime_tabuleiro(temp)
 
-def checa_tabuleiros(tab1, tab2): 
+def tab_iguais(tab1, tab2): 
   sao_iguais = True 
   for i in range(3):
     for j in range(3):
@@ -180,8 +180,8 @@ def expandir_no(tab):   #retorna um conjunto de nós filhos com as próximas jog
 
     #move para a baixo
     a = copy.deepcopy(tab)
-    a[1][0] = a[3][0]
-    a[3][0] = 0
+    a[1][0] = a[2][0]
+    a[2][0] = 0
     a[4][0] = a[4][0] + 1  # profundidade do nó
     a[3][0] = tab
     a[3][1] = dman(a[:3])
@@ -339,37 +339,80 @@ def dman(tab):
                 h = h + abs(indices(tab[i][j], 0) - i) + abs(indices(tab[i][j], 1) - j)
     return h
 
-#ganho: A* = custo real do caminho, ou seja, a cada nó expandido soma-se +1
-# a variável ganho
-
+#Função valor_no
+#f(n) = g(n) + h(n)
+#g(n) = custo do nó inicial até nó n profundidade do nó
+#h(n) = heuristica que sera numero de peças fora do lugar
+def valor_no(tab):
+  return (npfl(tab) + tab[4][0])
 
 #############################
 #ALGORITMOS DE BUSCA
 #############################
- 
-#def busca_a_estrela(tab):
 
-#implementar
-    
+#ganho: A* = custo real do caminho, ou seja, a cada nó expandido soma-se +1
+# a variável ganho
+def a_estrela(tab_inicial, heuristica):
+  fila = []
+  filaRepet = [] # verifica nós repetidos
+  fila.append(tab_inicial) # insere no final da fila
+  filaRepet.append(tab_inicial)
+  nos_exp = 0
+
+  while(len(fila) > 0):
+    no_temp = fila.pop(0)
+    nos_exp = nos_exp + 1
+    print('\n Nó expandido: ', nos_exp)
+    imprime_tabuleiro(no_temp)
+
+    if (verifica_alvo(no_temp) == True):
+      print('\nSolução encontrada.')
+      imprime_resultado(no_temp)
+      break
+
+    else:
+      filhos = expandir_no(no_temp)
+      filhos_nao_repet = []
+
+      for filho in filhos:
+        ja_existe = False
+
+        for x in filaRepet:
+          if(tab_iguais(filho, x)):
+            ja_existe = True
+            break
+
+        if (ja_existe == False):
+          filhos_nao_repet.append(filho)
+      
+      f_n = 999999 # quanto menor melhor
+      #achar a melhor no que possui o menor valor
+      for filho in filhos_nao_repet:
+        valor = filho[3][heuristica] + filho[4][0]
+        if (valor < f_n):
+          f_n = valor
+
+      for filho in filhos_nao_repet:
+        if (filho[3][heuristica] + filho[4][0] == f_n):
+          fila.append(filho)
+          filaRepet.append(filho)
 
 ####################
 ### MENU
 ####################
 
-#print('*** IA - Jogo dos Oito  ***')
-#print('*** O tabuleiro inicial ***')
-#imprime_tabuleiro(tabuleiro_inicial)
-#print('Informe qual algoritmo deseja utilizar: ')
-#print("1: Busca Cega em Largura")
-#print("2: Busca Cega em Profundidade")
-#print("3: Busca Com Informação (A*) Heurística peças fora do lugar")
-#print("4: Busca Com Informação (A*) Heurística Dist. Manhattan")
-print(dman(tabuleiro_inicial))
-#opcao = int(input('Informe uma opção: '))
-#if(op==1):
-#  busca_largura(tabuleiro_inicial)
-#elif(op==2):
-#  busca_profundidade(tabuleiro_inicial)
+print('*** IA - Jogo dos Oito  ***')
+print('*** O tabuleiro inicial ***')
+imprime_tabuleiro(tabuleiro_inicial)
+print('Informe qual algoritmo deseja utilizar: ')
+print('1: Busca Com Informação (A*) Heurística Dist. Manhattan')
+print('2: Busca Com Informação (A*) Heurística peças fora do lugar')
+#print(dman(tabuleiro_inicial))
+op = int(input('Informe uma opção: '))
+if(op==1):
+  a_estrela(tabuleiro_inicial, 1)
+elif(op==2):
+  a_estrela(tabuleiro_inicial, 2)
 #elif(op==3):
 #  busca_a_estrela(tabuleiro_inicial, 1)
 #elif(op==4):
